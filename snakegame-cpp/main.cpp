@@ -17,12 +17,15 @@
 
 
 /*
-
-plan: Starta ormen jätte stor och var 10onde eller var 5e äpple den äter så ska ormen bli mindre och mindre.
-
-
 Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEBUG option is on in inputEvents
 
+
+TODO:
+	- Get Eat food to work
+		- Grow onto snake
+	- move snake and food in to seperate class
+
+	- Gör spelbrädan mindre var 10 gång ormen äter mat
 */
 
 std::size_t hash(std::tuple<int, int> & pos)
@@ -188,16 +191,21 @@ int main()
 		// Hash position current position
 		snakePosHashed = hash(snakePosition);
 
+
 		if (snakePosHashed != snakePosHashedCopy) // Check if hash differ, If they do update window
 		{	
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);	
 		}
 
-		if (snakePosition == foodPosition) // Check if food and head of snake is on the same
+		// Check if food and head of snake is on the same
+		if (std::get<0>(snakePosition) == std::get<0>(foodPosition) + 5 && std::get<1>(snakePosition) == std::get<1>(foodPosition) + 5)
 		{
 			std::cout << true << "\n";
-			food = { r.GetUniformInt<int>(0, frame.getWindowHeight()), r.GetUniformInt<int>(0, frame.getWindowWidth()), size, size };
+			std::get<0>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowWidth());
+			std::get<1>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowHeight());
+			std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
+			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
 			// Add one to snake
 		}
 
