@@ -1,0 +1,3 @@
+[submodule "snakegame-cpp/limpanLibs"]
+	path = snakegame-cpp/limpanLibs
+	url = git@github.com:linus-jansson/limpanLibs.git
