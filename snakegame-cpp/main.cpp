@@ -11,7 +11,6 @@
 #include <functional>
 #include <vector>
 
-
 #include "limpanLibs/lib/random.h"
 
 #include "rect.h"
@@ -38,11 +37,47 @@ Bug:
 		- Tror man måste kolla ifall den är i ett hörn och göra xPos och yPos velocity till 0
 */
 
-std::size_t hash(std::tuple<int, int> &pos)
+
+
+std::size_t hash(std::tuple<int, int> pos)
 {
 	std::size_t h1 = std::hash<int>{}(std::get<0>(pos));
 	std::size_t h2 = std::hash<int>{}(std::get<1>(pos));
 	return h1 ^ (h2 << 1); // or use boost::hash_combine
+}
+
+/*
+
+	Check if food and snake head touch
+
+	int snakeXLeft = std::get<0>(snakePosition)
+	int snakeXRight = std::get<0>(snakePosition) + size
+
+	int snakeYUp = std::get<1>(snakePosition)
+	int snakeYDown = std::get<1>(snakePosition) + size
+
+	snakeXLeft <= foodXRight || snakeXLeft >= foodXLeft
+	snakeXRight <= foodXRight || snakeXRight >= foodXLeft
+
+	snakeYUp <= foodYRight || snakeYLeft >= foodYLeft
+	snakeYRight <= foodYRight || snakeYRight >= foodYLeft
+		
+	*/
+
+bool valueInRange(int value, int min, int max)
+{
+	return (value >= min) && (value <= max);
+}
+
+bool rectOverlap(std::tuple<int, int> snakePos, std::tuple<int, int> foodPos, int foodSize, int snakeSize)
+{
+	bool xOverlap = valueInRange(std::get<0>(snakePos), std::get<0>(foodPos), std::get<0>(foodPos) + foodSize) ||
+					valueInRange(std::get<0>(foodPos), std::get<0>(snakePos), std::get<0>(snakePos) + snakeSize);
+
+	bool yOverlap = valueInRange(std::get<1>(snakePos), std::get<1>(foodPos), std::get<1>(foodPos) + foodSize) ||
+					valueInRange(std::get<1>(foodPos), std::get<1>(snakePos), std::get<1>(snakePos) + snakeSize);
+
+	return xOverlap && yOverlap;
 }
 
 void inputEvents(limpan::window &frame, SDL_Event &event, char &direction)
@@ -102,109 +137,49 @@ void inputEvents(limpan::window &frame, SDL_Event &event, char &direction)
 	}
 }
 
-void moveSnake(char &dir, std::tuple<int, int> &pos, SDL_Rect &head, int size)
+void moveSnake(char &dir, std::tuple<int, int> pos, limpan::rect &snake, int size, int speed)
 {
 
 	/* Check Tail vector and move position back one spot*/
 	switch (dir)
 	{
 	case 'r':
-		head = {std::get<0>(pos)++, std::get<1>(pos), size, size};
+		snake.changeRect(std::get<0>(pos) += speed, std::get<1>(pos), size, size);
 		break;
 	case 'l':
-		head = {std::get<0>(pos)--, std::get<1>(pos), size, size};
+		snake.changeRect(std::get<0>(pos) -= speed, std::get<1>(pos), size, size);
 		break;
 	case 'u':
-		head = {std::get<0>(pos), std::get<1>(pos)--, size, size};
+		snake.changeRect(std::get<0>(pos), std::get<1>(pos) -= speed, size, size);
 		break;
 	case 'd':
-		head = {std::get<0>(pos), std::get<1>(pos)++, size, size};
+		snake.changeRect(std::get<0>(pos), std::get<1>(pos) += speed, size, size);
 		break;
 	case 's':
-		head = {std::get<0>(pos), std::get<1>(pos), 40, 40};
+		snake.changeRect(std::get<0>(pos), std::get<1>(pos), 40, 40);
 		break;
 	default:
 		break;
 	}
 }
 
-void moveFood();
-
 // If head touches food call this function and add one to the vector(tail)
-void addToTail();  
+void addToTail();
 
-void renderFood(SDL_Renderer *_renderer, SDL_Rect &food)
-{
 
-	SDL_SetRenderDrawColor(_renderer, 255, 0, 0, 255);
-	SDL_RenderFillRect(_renderer, &food);
-	SDL_RenderPresent(_renderer);
-}
-
-void renderSnake(SDL_Renderer *_renderer, SDL_Rect &rect)
-{
-
-	SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
-	SDL_RenderFillRect(_renderer, &rect);
-	SDL_RenderPresent(_renderer);
-}
-
-/*
-
-	Check if food and snake head touch
-
-	int snakeXLeft = std::get<0>(snakePosition)
-	int snakeXRight = std::get<0>(snakePosition) + size
-
-	int snakeYUp = std::get<1>(snakePosition)
-	int snakeYDown = std::get<1>(snakePosition) + size
-
-	snakeXLeft <= foodXRight || snakeXLeft >= foodXLeft
-	snakeXRight <= foodXRight || snakeXRight >= foodXLeft
-
-	snakeYUp <= foodYRight || snakeYLeft >= foodYLeft
-	snakeYRight <= foodYRight || snakeYRight >= foodYLeft
-		
-	*/
-
-bool valueInRange(int value, int min, int max)
-{
-	return (value >= min) && (value <= max);
-}
-
-bool rectOverlap(std::tuple<int, int> snakePos, std::tuple<int, int> foodPos, int foodSize, int snakeSize)
-{
-	bool xOverlap = valueInRange(std::get<0>(snakePos), std::get<0>(foodPos), std::get<0>(foodPos) + foodSize) ||
-					valueInRange(std::get<0>(foodPos), std::get<0>(snakePos), std::get<0>(snakePos) + snakeSize);
-
-	bool yOverlap = valueInRange(std::get<1>(snakePos), std::get<1>(foodPos), std::get<1>(foodPos) + foodSize) ||
-					valueInRange(std::get<1>(foodPos), std::get<1>(snakePos), std::get<1>(snakePos) + snakeSize);
-
-	return xOverlap && yOverlap;
-}
 
 int main()
 {
+	const int size = 20;
+	const int speed = 2;
+
 	limpan::random r;
 	limpan::window frame("Snake game");
 
-	limpan::rect testRect(&frame);
+	limpan::rect snake(&frame, r.GetUniformInt<int>(0, frame.getWindowWidth() - size), r.GetUniformInt<int>(0, frame.getWindowHeight() - size), 20);
+	limpan::rect food(&frame, r.GetUniformInt<int>(0, frame.getWindowWidth() - size), r.GetUniformInt<int>(0, frame.getWindowHeight() - size), 20);
 
 	SDL_Event event;
-
-	int xPos = r.GetUniformInt<int>(0, frame.getWindowWidth());
-	int yPos = r.GetUniformInt<int>(0, frame.getWindowHeight());
-
-	int foodxPos = r.GetUniformInt<int>(0, frame.getWindowWidth());
-	int foodyPos = r.GetUniformInt<int>(0, frame.getWindowHeight());
-
-	const int size = 20;
-
-	std::tuple<int, int> snakePosition(xPos, yPos);
-	std::tuple<int, int> foodPosition(foodxPos, foodyPos);
-
-	SDL_Rect head = {xPos, yPos, size, size};
-	SDL_Rect food = {foodxPos, foodyPos, size, size};
 
 	std::vector<std::tuple<int, int>> tail;
 
@@ -213,71 +188,72 @@ int main()
 	// std::cout << PosHased << "\n" << PosHasedCopy << std::endl;
 	char Dir;
 
-	std::tuple<int, int, int, int> testRGBA(0,255,0,255);
+	std::tuple<int, int, int, int> snakeColor(255, 255, 255, 255);
+	std::tuple<int, int, int, int> foodColor(0, 255, 0, 255);
 
 	int foodCount = 1;
 
 	while (!frame.isClosed())
 	{
 		// Check for events
-		
+
 		inputEvents(frame, event, Dir);
-		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		
-		
-		moveSnake(Dir, snakePosition, head, size);
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+
+		moveSnake(Dir, snake.getPosition(), snake, size, speed);
 
 		// Hash position current position
-		snakePosHashed = hash(snakePosition);
+		snakePosHashed = hash(snake.getPosition());
 
 		if (snakePosHashed != snakePosHashedCopy) // Check if snakepos, or food differ. otherwise dont update screen
-		{	
-			
+		{
+
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);
-			
-			// testRect.renderRect(testRGBA);
-			renderSnake(frame.getRenderer(), head);
-			renderFood(frame.getRenderer(), food);
+
+			snake.renderRect(snakeColor);
+			food.renderRect(foodColor);
 		}
 
 		// Check if food and head of snake is on the same
-		if (rectOverlap(snakePosition, foodPosition, size, size))
+		if (rectOverlap(snake.getPosition(), food.getPosition(), size, size)) // NOT WORKING
 		{
-			
-			std::get<0>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowWidth());
-			std::get<1>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowHeight());
-			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
-			
-			// Debug
-			// std::cout << true << "\n";
-			// std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
 
-			
+			food.changeRect(r.GetUniformInt<int>(0, frame.getWindowWidth() - size), r.GetUniformInt<int>(0, frame.getWindowHeight() - size), size, size);
+
+			// Debug: Will return True if rectOverlap() is true. and will return the new position of the food
+			// std::cout << true << "\n";
+			// std::cout << std::get<0>(food.getPosition()) << " " << std::get<1>(food.getPosition()) << "\n";
+
 			// Add one to snake tail
 			std::cout << foodCount++ << "\n";
 		}
 
 		// BORDER CONTROL
-		if (std::get<0>(snakePosition) + size >= frame.getWindowWidth())
+		if (std::get<0>(snake.getPosition()) + size >= frame.getWindowWidth())
 		{
-			std::get<0>(snakePosition) = frame.getWindowWidth() - size;
-			frame.setClosed(true);
+			snake.setPosition(frame.getWindowWidth() - size, std::get<1>(snake.getPosition()));
+
+			// frame.setClosed(true);
 		}
-		else if (std::get<0>(snakePosition) <= 0)
+		else if (std::get<0>(snake.getPosition()) <= 0)
 		{
-			std::get<0>(snakePosition) = 0;
-			frame.setClosed(true);
+
+			snake.setPosition(0, std::get<1>(snake.getPosition()));
+
+			// frame.setClosed(true);
 		}
-		else if (std::get<1>(snakePosition) + size >= frame.getWindowHeight())
+		else if (std::get<1>(snake.getPosition()) + size >= frame.getWindowHeight())
 		{
-			std::get<1>(snakePosition) = frame.getWindowHeight() - size;
-			frame.setClosed(true);
+			snake.setPosition(std::get<0>(snake.getPosition()), frame.getWindowHeight() - size);
+
+			// frame.setClosed(true);
 		}
-		else if (std::get<1>(snakePosition) <= 0)
+		else if (std::get<1>(snake.getPosition()) <= 0)
 		{
-			std::get<1>(snakePosition) = 0;
-			frame.setClosed(true);
+			snake.setPosition(std::get<0>(snake.getPosition()), 0);
+
+			// frame.setClosed(true);
 		}
 
 		// make copy of current hashed position
