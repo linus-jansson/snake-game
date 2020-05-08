@@ -20,9 +20,10 @@ Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEB
 
 
 TODO:
-	- Get Eat food to work
-		- Grow onto snake
-	- move snake and food in to seperate class
+	- Get Eat food to work <-- done
+		- Grow onto snake making it larger
+
+	- Inherita nödvändiga grejer i rect classen
 
 	- Gör spelbrädan mindre var 10 gång ormen äter mat
 */
@@ -207,6 +208,8 @@ int main()
 	// std::cout << PosHased << "\n" << PosHasedCopy << std::endl;
 	char Dir;
 
+
+
 	while (!frame.isClosed())
 	{
 		// Check for events
@@ -221,7 +224,8 @@ int main()
 		snakePosHashed = hash(snakePosition);
 
 		if (snakePosHashed != snakePosHashedCopy) // Check if hash differ, If they do update window
-		{
+		{	
+
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);
 		}
@@ -237,8 +241,6 @@ int main()
 			std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
 
 			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
-
-			renderFood(frame.getRenderer(), food);
 			// Add one to snake
 		}
 
