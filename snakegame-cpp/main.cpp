@@ -2,20 +2,19 @@
 
 #include <chrono>
 #include <thread>
-// #include <stdexcept>
 #include <iostream>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <tuple>
+#include <cmath>
+#include <functional>
+#include <vector>
+
 
 #include "limpanLibs/lib/random.h"
 
-#include <cmath>
-
-#include <functional>
-
-#include <vector>
+#include "rect.h"
 
 /*
 Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEBUG option is on in inputEvents
@@ -189,6 +188,8 @@ int main()
 	limpan::random r;
 	limpan::window frame("Snake game");
 
+	limpan::rect testRect(&frame);
+
 	SDL_Event event;
 
 	int xPos = r.GetUniformInt<int>(0, frame.getWindowWidth());
@@ -212,43 +213,49 @@ int main()
 	// std::cout << PosHased << "\n" << PosHasedCopy << std::endl;
 	char Dir;
 
+	std::tuple<int, int, int, int> testRGBA(0,255,0,255);
 
+	int foodCount = 1;
 
 	while (!frame.isClosed())
 	{
 		// Check for events
-
+		
 		inputEvents(frame, event, Dir);
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
-		renderSnake(frame.getRenderer(), head);
-		renderFood(frame.getRenderer(), food);
+		
+		
 		moveSnake(Dir, snakePosition, head, size);
 
 		// Hash position current position
 		snakePosHashed = hash(snakePosition);
 
-		if (snakePosHashed != snakePosHashedCopy) // Check if hash differ, If they do update window
+		if (snakePosHashed != snakePosHashedCopy) // Check if snakepos, or food differ. otherwise dont update screen
 		{	
-
+			
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);
+			
+			// testRect.renderRect(testRGBA);
+			renderSnake(frame.getRenderer(), head);
+			renderFood(frame.getRenderer(), food);
 		}
 
 		// Check if food and head of snake is on the same
 		if (rectOverlap(snakePosition, foodPosition, size, size))
 		{
 			
-
 			std::get<0>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowWidth());
 			std::get<1>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowHeight());
 			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
 			
 			// Debug
-			std::cout << true << "\n";
-			std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
+			// std::cout << true << "\n";
+			// std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
 
 			
-			// Add one to snake
+			// Add one to snake tail
+			std::cout << foodCount++ << "\n";
 		}
 
 		// BORDER CONTROL

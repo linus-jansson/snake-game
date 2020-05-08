@@ -1,13 +1,16 @@
+#ifndef LIMPAN_RECT_H
+#define LIMPAN_RECT_H
+
 #include "window.h"
 #include <tuple>
-
 namespace limpan
 {
   class rect
   {
     public:
       /* Include window when creating object so you can fetch rendrer*/
-      rect()
+      rect(limpan::window* win) 
+          : _renderer(win->getRenderer())
       {
 
       }
@@ -26,8 +29,9 @@ namespace limpan
     
       /* This method is used to change the properties of the rectangle*/
       void changeRect(int x, int y, int w, int h) { _rect = {x, y, w, h}; }
+      
       std::tuple<int, int> getPosition() { return _position; }
-  
+
 
     private:  
       int _xPos = 0;
@@ -42,3 +46,5 @@ namespace limpan
       SDL_Rect _rect = {std::get<0>(_position), std::get<1>(_position), _width, _height};
   };
 }
+
+#endif
