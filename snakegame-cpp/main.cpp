@@ -15,6 +15,8 @@
 
 #include <functional>
 
+#include <vector>
+
 /*
 Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEBUG option is on in inputEvents
 
@@ -22,10 +24,19 @@ Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEB
 TODO:
 	- Get Eat food to work <-- done
 		- Grow onto snake making it larger
+	- Lägg till rörelse regler
+
 
 	- Inherita nödvändiga grejer i rect classen
 
 	- Gör spelbrädan mindre var 10 gång ormen äter mat
+
+	- Lägg till så att rect classen centrerar objecten på rendern
+
+
+Bug:
+	- Om man går till hörnet av spelplanen och försöker gå ut så kan man göra det
+		- Tror man måste kolla ifall den är i ett hörn och göra xPos och yPos velocity till 0
 */
 
 std::size_t hash(std::tuple<int, int> &pos)
@@ -85,18 +96,6 @@ void inputEvents(limpan::window &frame, SDL_Event &event, char &direction)
 			break;
 
 		case SDL_WINDOWEVENT:
-			// if (event.window.windowID == windowID)  {
-			// 	switch (event.window.event)
-			// 	{
-			// 		case SDL_WINDOWEVENT_RESIZED:
-			// 		case SDL_WINDOWEVENT_SIZE_CHANGED:
-			// 			// std::cout << "size changed to " << event.window.data1 << "x" << event.window.data2 << std::endl;
-			// 			frame.setWinWidth(event.window.data1);
-			// 			frame.setWinHeight(event.window.data2);
-			// 			// SDL_SetWindowSize(_window, _width, _height);
-			// 			break;
-			// 	}
-			// }
 			break;
 		default:
 			break;
@@ -104,8 +103,10 @@ void inputEvents(limpan::window &frame, SDL_Event &event, char &direction)
 	}
 }
 
-void moveSnake(char &dir, std::tuple<int, int> &pos, SDL_Rect &head, int size, int scl)
+void moveSnake(char &dir, std::tuple<int, int> &pos, SDL_Rect &head, int size)
 {
+
+	/* Check Tail vector and move position back one spot*/
 	switch (dir)
 	{
 	case 'r':
@@ -127,9 +128,11 @@ void moveSnake(char &dir, std::tuple<int, int> &pos, SDL_Rect &head, int size, i
 		break;
 	}
 }
-void moveFood(SDL_Rect food, std::tuple<int, int> &foodPos, limpan::random &r, limpan::window &frame, int size)
-{
-}
+
+void moveFood();
+
+// If head touches food call this function and add one to the vector(tail)
+void addToTail();  
 
 void renderFood(SDL_Renderer *_renderer, SDL_Rect &food)
 {
@@ -195,13 +198,14 @@ int main()
 	int foodyPos = r.GetUniformInt<int>(0, frame.getWindowHeight());
 
 	const int size = 20;
-	const int scl = 2;
 
 	std::tuple<int, int> snakePosition(xPos, yPos);
 	std::tuple<int, int> foodPosition(foodxPos, foodyPos);
 
 	SDL_Rect head = {xPos, yPos, size, size};
 	SDL_Rect food = {foodxPos, foodyPos, size, size};
+
+	std::vector<std::tuple<int, int>> tail;
 
 	int snakePosHashed, snakePosHashedCopy;
 
@@ -218,7 +222,7 @@ int main()
 		std::this_thread::sleep_for(std::chrono::milliseconds(5));
 		renderSnake(frame.getRenderer(), head);
 		renderFood(frame.getRenderer(), food);
-		moveSnake(Dir, snakePosition, head, size, scl);
+		moveSnake(Dir, snakePosition, head, size);
 
 		// Hash position current position
 		snakePosHashed = hash(snakePosition);
@@ -233,14 +237,17 @@ int main()
 		// Check if food and head of snake is on the same
 		if (rectOverlap(snakePosition, foodPosition, size, size))
 		{
-			std::cout << true << "\n";
+			
 
 			std::get<0>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowWidth());
 			std::get<1>(foodPosition) = r.GetUniformInt<int>(0, frame.getWindowHeight());
-
+			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
+			
+			// Debug
+			std::cout << true << "\n";
 			std::cout << std::get<0>(foodPosition) << " " << std::get<1>(foodPosition) << "\n";
 
-			food = {std::get<0>(foodPosition), std::get<1>(foodPosition), size, size};
+			
 			// Add one to snake
 		}
 
@@ -248,18 +255,22 @@ int main()
 		if (std::get<0>(snakePosition) + size >= frame.getWindowWidth())
 		{
 			std::get<0>(snakePosition) = frame.getWindowWidth() - size;
+			frame.setClosed(true);
 		}
 		else if (std::get<0>(snakePosition) <= 0)
 		{
 			std::get<0>(snakePosition) = 0;
+			frame.setClosed(true);
 		}
 		else if (std::get<1>(snakePosition) + size >= frame.getWindowHeight())
 		{
 			std::get<1>(snakePosition) = frame.getWindowHeight() - size;
+			frame.setClosed(true);
 		}
 		else if (std::get<1>(snakePosition) <= 0)
 		{
 			std::get<1>(snakePosition) = 0;
+			frame.setClosed(true);
 		}
 
 		// make copy of current hashed position
