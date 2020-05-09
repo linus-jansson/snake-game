@@ -140,7 +140,6 @@ void inputEvents(limpan::window &frame, SDL_Event &event, char &direction)
 void moveSnake(char &dir, std::tuple<int, int> pos, limpan::rect &snake, int size, int speed)
 {
 
-	/* Check Tail vector and move position back one spot*/
 	switch (dir)
 	{
 	case 'r':
@@ -161,10 +160,68 @@ void moveSnake(char &dir, std::tuple<int, int> pos, limpan::rect &snake, int siz
 	default:
 		break;
 	}
+
 }
 
+void renderTail(std::vector<std::tuple<int, int>> & tail, limpan::window & frame)
+{
+	std::tuple<int, int, int, int> tailColor(255, 255, 255, 255);
+
+	for (auto t : tail)
+	{
+		limpan::rect tail(&frame, std::get<0>(t), std::get<1>(t), 20);
+		tail.renderRect(tailColor);
+	}
+	
+}
+
+// void moveTail(std::vector<std::tuple<int, int>> & tail, limpan::rect & snake)
+// {
+
+// 	std::tuple<int, int> headCurrent = snake.getPosition();
+
+// 	tail[0] = headCurrent;
+
+// 	for (int i = 1; i < tail.size(); i++)
+// 	{
+// 		tail[i] = tail[i++];
+// 	}
+// 	// Get the current position of the snake
+// 	// Move index back one place
+// }
+
 // If head touches food call this function and add one to the vector(tail)
-void addToTail();
+void addToTail(std::vector<std::tuple<int, int>> & tail,limpan::rect & snake, char & dir, int size)
+{
+
+	std::tuple<int, int> position;
+	// Hämta "direcvtion" --> Lägg till Den positionen + directionen (Så den hamnar rätt) till vectorn
+	switch (dir)
+	{
+	case 'r':
+		position = {std::get<0>(snake.getPosition()) - size, std::get<1>(snake.getPosition())};
+		tail.push_back(position);
+		break;
+	case 'l':
+		position = {std::get<0>(snake.getPosition()) + size, std::get<1>(snake.getPosition())};
+		tail.push_back(position);
+		break;
+	case 'u':
+		position = {std::get<0>(snake.getPosition()), std::get<1>(snake.getPosition()) + size};
+		tail.push_back(position);
+		break;
+	case 'd':
+		position = {std::get<0>(snake.getPosition()), std::get<1>(snake.getPosition()) - size};
+		tail.push_back(position);
+		break;
+	default:
+		break;
+	}
+
+
+	
+	
+}
 
 
 
@@ -185,7 +242,6 @@ int main()
 
 	int snakePosHashed, snakePosHashedCopy;
 
-	// std::cout << PosHased << "\n" << PosHasedCopy << std::endl;
 	char Dir;
 
 	std::tuple<int, int, int, int> snakeColor(255, 255, 255, 255);
@@ -199,8 +255,9 @@ int main()
 
 		inputEvents(frame, event, Dir);
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
-
+		
 		moveSnake(Dir, snake.getPosition(), snake, size, speed);
+
 
 		// Hash position current position
 		snakePosHashed = hash(snake.getPosition());
@@ -210,7 +267,12 @@ int main()
 
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);
-
+			
+			if (tail.size() > 0)
+			{
+				// moveTail(tail, snake);
+				renderTail(tail, frame);
+			}
 			snake.renderRect(snakeColor);
 			food.renderRect(foodColor);
 		}
@@ -226,6 +288,7 @@ int main()
 			// std::cout << std::get<0>(food.getPosition()) << " " << std::get<1>(food.getPosition()) << "\n";
 
 			// Add one to snake tail
+			addToTail(tail, snake, Dir, size);
 			std::cout << foodCount++ << "\n";
 		}
 
