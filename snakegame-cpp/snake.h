@@ -4,12 +4,7 @@
 #include "rect.h"
 
 #include "limpanLibs/lib/random.h"
-/*
 
-Klassen orm kommer ärva från rektangel.
-och snake kommer bara ha ett object.
-
-*/
 namespace limpan
 {
     class Snake //: rect
@@ -24,11 +19,12 @@ namespace limpan
             STOP
         };
 
-        Snake(window *win) 
+        Snake(window *win)
             : _window(win),
-            _maxWidth(win->getWindowWidth()),
-            _maxHeight(win->getWindowHeight()),
-            head(win, r.GetUniformInt<int>(0, win->getWindowWidth() - w), r.GetUniformInt<int>(0, win->getWindowHeight() - h), 20, 20, {255, 255, 255, 255})
+              _maxWidth(win->getWindowWidth()),
+              _maxHeight(win->getWindowHeight()),
+              head(win, r.GetUniformInt<int>(0, win->getWindowWidth() - _w), r.GetUniformInt<int>(0, win->getWindowHeight() - _h), 20, 20, {0, 0, 255, 255}),
+              body()
         {
         }
 
@@ -37,36 +33,37 @@ namespace limpan
             switch (dir)
             {
             case RIGHT:
-                head.changeRect(std::get<0>(position) += speed, std::get<1>(position), w, h);
+                head.changeRect(std::get<0>(position) += _speed, std::get<1>(position), _w, _h);
                 break;
             case LEFT:
-                head.changeRect(std::get<0>(position) -= speed, std::get<1>(position), w, h);
+                head.changeRect(std::get<0>(position) -= _speed, std::get<1>(position), _w, _h);
                 break;
             case UP:
-                head.changeRect(std::get<0>(position), std::get<1>(position) -= speed, w, h);
+                head.changeRect(std::get<0>(position), std::get<1>(position) -= _speed, _w, _h);
                 break;
             case DOWN:
-                head.changeRect(std::get<0>(position), std::get<1>(position) += speed, w, h);
+                head.changeRect(std::get<0>(position), std::get<1>(position) += _speed, _w, _h);
                 break;
             case STOP:
-                head.changeRect(std::get<0>(position), std::get<1>(position), w * 2, h * 2);
+                head.changeRect(std::get<0>(position), std::get<1>(position), _w * 2, _h * 2);
                 break;
             default:
                 break;
             }
-            
         }
 
         void grow()
         {
-            std::cout << ++size << "\n";
+            std::cout << ++_size << "\n";
+
+            DIRECTION dir;
+            addToTail(dir); 
         }
 
         void render()
         {
             head.renderRect({255, 255, 255, 255});
         }
-
 
         std::tuple<int, int> getPosition()
         {
@@ -81,14 +78,13 @@ namespace limpan
 
         int getHeadWidth()
         {
-            return w;
+            return _w;
         }
 
         int getHeadHeight()
         {
-            return h;
+            return _h;
         }
-
         // void renderTail(std::vector<std::tuple<int, int>> & tail, limpan::window & frame)
         // {
         // 	std::tuple<int, int, int, int> tailColor(255, 255, 255, 255);
@@ -98,7 +94,7 @@ namespace limpan
         // 		limpan::rect tail(&frame, std::get<0>(t), std::get<1>(t), 20);
         // 		tail.renderRect(tailColor);
         // 	}
-            
+
         // }
 
         // void moveTail(std::vector<std::tuple<int, int>> & tail, limpan::rect & snake)
@@ -116,50 +112,51 @@ namespace limpan
         // 	// Move index back one place
         // }
 
-
         // If head touches food call this function and add one to the vector(tail)
-        // void addToTail(std::vector<std::tuple<int, int>> & tail,limpan::rect & snake, char & dir, int size)
-        // {
 
-        //     std::tuple<int, int> position;
-        //     // Hämta "direcvtion" --> Lägg till Den positionen + directionen (Så den hamnar rätt) till vectorn
-        //     switch (dir)
-        //     {
-        //     case 'r':
-        //         position = {std::get<0>(snake.getPosition()) - size, std::get<1>(snake.getPosition())};
-        //         tail.push_back(position);
-        //         break;
-        //     case 'l':
-        //         position = {std::get<0>(snake.getPosition()) + size, std::get<1>(snake.getPosition())};
-        //         tail.push_back(position);
-        //         break;
-        //     case 'u':
-        //         position = {std::get<0>(snake.getPosition()), std::get<1>(snake.getPosition()) + size};
-        //         tail.push_back(position);
-        //         break;
-        //     case 'd':
-        //         position = {std::get<0>(snake.getPosition()), std::get<1>(snake.getPosition()) - size};
-        //         tail.push_back(position);
-        //         break;
-        //     default:
-        //         break;
-        //     }
-        // }
 
     private:
         // std::tuple<int, int, int, int> headColor = ;
 
+        void addToTail(DIRECTION & dir)
+        {
+            // Hämta "direcvtion" --> Lägg till Den positionen + directionen (Så den hamnar rätt) till vectorn
+            switch (dir)
+            {
+            case RIGHT:
+                // position = {std::get<0>(getPosition()) - _w, std::get<1>(getPosition())};
+                
+                body.push_back(rect(_window, std::get<0>(getPosition()) - _w, std::get<1>(getPosition()), 20, 20, {255, 255, 255, 255}));
+                break;
+            case LEFT:
+                // position = {std::get<0>(getPosition()) + _w, std::get<1>(getPosition())};
+                // body.push_back(position);
+                break;
+            case UP:
+                // position = {std::get<0>(getPosition()), std::get<1>(getPosition()) + _h};
+                // body.push_back(position);
+                break;
+            case DOWN:
+                // position = {std::get<0>(getPosition()), std::get<1>(getPosition()) - _h};
+                // body.push_back(position);
+                break;
+            default:
+                break;
+            }
+        }
+
         random r;
 
-        const int w = 20;
-        const int h = 20;
-        const int speed = 1;
+        const int _w = 20;
+        const int _h = 20;
+        int _speed = 2;
 
-        int size = 0;
+        int _size = 0;
 
         window *_window;
 
         rect head;
+
         std::vector<rect> body;
 
         int _maxWidth;
