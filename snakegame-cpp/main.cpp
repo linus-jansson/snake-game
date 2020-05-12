@@ -14,6 +14,7 @@
 #include "window.h"
 #include "rect.h"
 #include "snake.h"
+#include "food.h"
 
 /*
 Controls: wasd or arrow keys to move snake arround. Space to make it stop if DEBUG option is on in inputEvents
@@ -148,23 +149,20 @@ int main()
 	limpan::window frame("Snake game");
 
 	limpan::Snake snake(&frame);
+	limpan::Food food(&frame);
 
-	limpan::rect food(&frame, r.GetUniformInt<int>(0, frame.getWindowWidth() - 20), r.GetUniformInt<int>(0, frame.getWindowHeight() - 20), 20, 20, {0, 255, 0, 255});
-
+	// limpan::rect food(&frame, r.GetUniformInt<int>(0, frame.getWindowWidth() - 20), r.GetUniformInt<int>(0, frame.getWindowHeight() - 20), 20, 20, {0, 255, 0, 255});
 
 	int snakeHeadWidth = snake.getHeadHeight();
 	int snakeHeadHeight = snake.getHeadWidth();
 
-	int foodWidth;
-	int foodHeight;
+	int foodWidth = 20;
+	int foodHeight = 20;
 
-
-	std::tuple<int, int, int, int> snakeColor(255, 255, 255, 255);
-
-
+	// std::tuple<int, int, int, int> snakeColor(255, 255, 255, 255);
 
 	// limpan::rect snake(&frame, r.GetUniformInt<int>(0, frame.getWindowWidth() - size), r.GetUniformInt<int>(0, frame.getWindowHeight() - size), 20, snakeColor);
-	
+
 	SDL_Event event;
 
 	std::vector<std::tuple<int, int>> tail;
@@ -172,8 +170,7 @@ int main()
 	int snakePosHashed, snakePosHashedCopy;
 
 	limpan::Snake::DIRECTION DIR = limpan::Snake::DIRECTION::STOP;
-
-
+	food.move();
 	while (!frame.isClosed())
 	{
 
@@ -182,6 +179,7 @@ int main()
 		inputEvents(frame, event, DIR);
 		std::this_thread::sleep_for(std::chrono::milliseconds(10));
 		snake.move(DIR);
+
 		// moveSnake(Dir, snake.getPosition(), snake, size, speed);
 
 		// Hash position current position
@@ -193,45 +191,51 @@ int main()
 			// Set the background color to black
 			frame.setWindowBGcolor(0, 0, 0, 255);
 
+			food.render();
 			snake.render();
-			food.renderRect({0, 255, 0, 255});
 		}
 
 		// // Check if food and head of snake is on the same
 		if (rectOverlap(snake.getPosition(), food.getPosition(), 20, 20))
 		{
 
-			food.changeRect(r.GetUniformInt<int>(0, frame.getWindowWidth() - 20), r.GetUniformInt<int>(0, frame.getWindowHeight() - 20), 20, 20);
+			food.move();
 
 			// Add one to snake tail
 			snake.grow();
 		}
 
 		// // BORDER CONTROL
-		if (std::get<0>(snake.getPosition()) + snakeHeadWidth >= frame.getWindowWidth())
+
+		if (std::get<0>(snake.getPosition()) + snakeHeadWidth >= frame.getWindowWidth()) // RIGHT
 		{
 			snake.setPosition(frame.getWindowWidth() - snakeHeadWidth, std::get<1>(snake.getPosition()));
-
+			// std::cout << "1\n";
+			DIR = limpan::Snake::DIRECTION::LEFT;
 			// frame.setClosed(true);
 		}
-		else if (std::get<0>(snake.getPosition()) <= 0)
+		else if (std::get<0>(snake.getPosition()) <= 0) // LEFT
 		{
 
 			snake.setPosition(0, std::get<1>(snake.getPosition()));
 
+			DIR = limpan::Snake::DIRECTION::RIGHT;
+			// std::cout << "2\n";
 			// frame.setClosed(true);
 		}
-		else if (std::get<1>(snake.getPosition()) + snakeHeadHeight >= frame.getWindowHeight())
+		else if (std::get<1>(snake.getPosition()) + snakeHeadHeight >= frame.getWindowHeight()) // DOWN
 		{
 			snake.setPosition(std::get<0>(snake.getPosition()), frame.getWindowHeight() - snakeHeadHeight);
-
+			DIR = limpan::Snake::DIRECTION::UP;
+			// std::cout << "3\n";
 			// frame.setClosed(true);
 		}
-		else if (std::get<1>(snake.getPosition()) <= 0)
+		else if (std::get<1>(snake.getPosition()) <= 0) // UP
 		{
 			snake.setPosition(std::get<0>(snake.getPosition()), 0);
-
-			// frame.setClosed(true);
+			DIR = limpan::Snake::DIRECTION::DOWN; // Sets the direction of the snake to its direction but reversed
+												  // std::cout << "4\n";
+												  // frame.setClosed(true);
 		}
 
 		// make copy of current hashed position
