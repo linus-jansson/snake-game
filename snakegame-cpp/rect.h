@@ -9,7 +9,7 @@ namespace limpan
   {
   public:
     /* Include window when creating object so you can fetch rendrer*/
-    rect(limpan::window *win, int defaultxPos, int defaultyPos, int width, int height, std::tuple<int, int, int, int> _rectColor)
+    rect(window *win, int defaultxPos, int defaultyPos, int width, int height, std::tuple<int, int, int, int> _rectColor)
         : _renderer(win->getRenderer()),
           _xPos(defaultxPos),
           _yPos(defaultyPos),
